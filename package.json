@@ -7,24 +7,31 @@
   "author": "Brendan Long <self@brendanlong.com>",
   "license": "Unlicense",
   "dependencies": {
+    "ajv": "5.5.2",
     "graphql": "^0.13.1"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-eslint": "^8.2.2",
+    "babel-preset-env": "^1.6.1",
     "babel-preset-flow": "^6.23.0",
     "eslint": "^4.18.1",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-flowtype": "^2.46.1",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-prettier": "^2.6.0",
+    "eslint-plugin-react": "^7.7.0",
     "flow-bin": "^0.66.0",
     "prettier": "^1.10.2"
   },
   "scripts": {
     "build": "babel src -d lib",
     "start": "yarn build && node lib/index.js",
+    "check": "yarn flow status && yarn lint",
     "lint": "eslint src",
+    "prettier": "prettier --write src/**/*.js",
     "flow start": "flow start",
     "flow stop": "flow stop",
     "flow status": "flow status",
