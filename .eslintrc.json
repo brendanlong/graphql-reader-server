@@ -7,5 +7,21 @@
     "airbnb",
     "plugin:prettier/recommended",
     "plugin:flowtype/recommended"
-  ]
+  ],
+  "rules": {
+    "import/extensions": [
+      "error",
+      "always",
+      {
+        "js": "never",
+        "mjs": "never"
+      }
+    ],
+    "no-restricted-syntax": [
+      "error",
+      "ForInStatement",
+      "LabeledStatement",
+      "WithStatement"
+    ]
+  }
 }

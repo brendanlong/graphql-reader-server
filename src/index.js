@@ -5,8 +5,7 @@ import { makeExecutableSchema } from "graphql-tools";
 import { GraphQLDateTime } from "graphql-iso-date";
 import { GraphQLUrl } from "graphql-url";
 
-import { FeedInput } from "./model";
-import { EntryTable, FeedTable } from "./db";
+import { Entry, FeedInput, Feed } from "./model";
 
 const schemaString = `
   scalar DateTime
@@ -27,7 +26,6 @@ const schemaString = `
     id: ID!
     uri: URI!
     title: String
-    nickname: String
     updated: DateTime
     entries: [Entry!]!
   }
@@ -53,9 +51,9 @@ const schema = makeExecutableSchema({
 });
 
 const root = {
-  entries: () => EntryTable.getAll(),
-  feeds: () => FeedTable.getAll(),
-  subscribeToFeed: ({ uri }) => FeedTable.insert(new FeedInput({ uri }))
+  entries: () => Entry.getAll(),
+  feeds: () => Feed.getAll(),
+  subscribeToFeed: ({ uri }) => Feed.insert(new FeedInput({ uri }))
 };
 
 const app = express();
