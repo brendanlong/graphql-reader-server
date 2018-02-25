@@ -62,7 +62,8 @@ app.use(
   graphqlHTTP({
     schema,
     rootValue: root,
-    graphiql: true
+    graphiql: true,
+    pretty: true
   })
 );
 app.listen(4000);
