@@ -52,13 +52,20 @@ export class EntryTable {
     return entries;
   }
 
-  static async getById(id: number): Promise<?Entry> {
+  static async getByIds(ids: $ReadOnlyArray<number>): Promise<Array<?Entry>> {
     const db = await dbPromise;
-    const row = await db.get("SELECT * FROM Entry WHERE id = ?", id);
-    if (row) {
-      return EntryTable.rowToEntry(row);
+    const placeholders = Array(ids.length)
+      .fill("?")
+      .join(",");
+    const rows = await db.all(
+      `SELECT * FROM Entry WHERE id IN(${placeholders})`,
+      ids
+    );
+    const rowsById: Map<number, Entry> = new Map();
+    for (const row of rows) {
+      rowsById.set(row.id, EntryTable.rowToEntry(row));
     }
-    return null;
+    return ids.map(id => rowsById.get(id));
   }
 
   static async getEntryIdsForFeed(feedId: number): Promise<number[]> {
@@ -101,13 +108,20 @@ export class FeedTable {
     return feeds;
   }
 
-  static async getById(id: number): Promise<?Feed> {
+  static async getByIds(ids: $ReadOnlyArray<number>): Promise<Array<?Feed>> {
     const db = await dbPromise;
-    const row = await db.get("SELECT * FROM Feed WHERE id = ?", id);
-    if (row) {
-      return FeedTable.rowToFeed(row);
+    const placeholders = Array(ids.length)
+      .fill("?")
+      .join(",");
+    const rows = await db.all(
+      `SELECT * FROM Feed WHERE id IN(${placeholders})`,
+      ids
+    );
+    const rowsById: Map<number, Feed> = new Map();
+    for (const row of rows) {
+      rowsById.set(row.id, FeedTable.rowToFeed(row));
     }
-    return null;
+    return ids.map(id => rowsById.get(id));
   }
 
   static async getByUri(uri: string): Promise<?Feed> {

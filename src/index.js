@@ -95,10 +95,8 @@ const schema = makeExecutableSchema({
 const app = express();
 app.use("/graphql", (req, res) => {
   const loaders = {
-    entryLoader: new DataLoader(ids =>
-      Promise.all(ids.map(EntryTable.getById))
-    ),
-    feedLoader: new DataLoader(ids => Promise.all(ids.map(FeedTable.getById))),
+    entryLoader: new DataLoader(EntryTable.getByIds),
+    feedLoader: new DataLoader(FeedTable.getByIds),
     feedEntryLoader: new DataLoader(ids =>
       Promise.all(ids.map(EntryTable.getEntryIdsForFeed))
     )
