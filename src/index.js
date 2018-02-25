@@ -42,18 +42,24 @@ const schemaString = `
   }
 `;
 
+type Loaders = {
+  entryLoader: DataLoader<number, ?Entry>,
+  feedLoader: DataLoader<number, ?Feed>,
+  feedEntryLoader: DataLoader<number, number[]>,
+};
+
 const resolveFunctions = {
   DateTime: GraphQLDateTime,
   URI: GraphQLUrl,
   Query: {
-    entries: async (_, __, { entryLoader }) => {
+    entries: async (_, __, { entryLoader }: Loaders) => {
       const entries = await EntryTable.getAll();
       for (const entry of entries) {
         entryLoader.prime(entry.id, entry);
       }
       return entries;
     },
-    feeds: async (_, __, { feedLoader }) => {
+    feeds: async (_, __, { feedLoader }: Loaders) => {
       const feeds = await FeedTable.getAll();
       for (const feed of feeds) {
         feedLoader.prime(feed.id, feed);
@@ -62,7 +68,7 @@ const resolveFunctions = {
     }
   },
   Mutation: {
-    subscribeToFeed: async (_, { uri }, { feedLoader }) => {
+    subscribeToFeed: async (_, { uri }, { feedLoader }: Loaders) => {
       await FeedTable.insert({ uri });
       const feed = await FeedTable.getByUri(uri);
       if (!feed) {
@@ -94,7 +100,7 @@ const schema = makeExecutableSchema({
 
 const app = express();
 app.use("/graphql", (req, res) => {
-  const loaders = {
+  const loaders: Loaders = {
     entryLoader: new DataLoader(EntryTable.getByIds),
     feedLoader: new DataLoader(FeedTable.getByIds),
     feedEntryLoader: new DataLoader(ids =>
