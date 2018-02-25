@@ -10,7 +10,10 @@
     "ajv": "5.5.2",
     "express": "^4.16.2",
     "express-graphql": "^0.6.12",
-    "graphql": "^0.13.1"
+    "graphql": "^0.13.1",
+    "graphql-iso-date": "^3.5.0",
+    "graphql-tools": "^2.21.0",
+    "graphql-url": "^2.0.4"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -26,11 +29,13 @@
     "eslint-plugin-prettier": "^2.6.0",
     "eslint-plugin-react": "^7.7.0",
     "flow-bin": "^0.66.0",
+    "nodemon": "^1.15.1",
     "prettier": "^1.10.2"
   },
   "scripts": {
     "build": "babel src -d lib",
-    "start": "yarn build && node lib/index.js",
+    "start": "babel-node src/index.js",
+    "start-watch": "nodemon --exec babel-node src/index.js",
     "check": "yarn flow status && yarn lint",
     "lint": "eslint src",
     "prettier": "prettier --write src/**/*.js",
