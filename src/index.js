@@ -7,7 +7,9 @@ import { GraphQLUrl } from "graphql-url";
 import DataLoader from "dataloader";
 
 import { Entry, Feed } from "./model";
-import { EntryTable, FeedTable } from "./db";
+import Backend from "./sqliteBackend";
+
+const backend = new Backend();
 
 const schemaString = `
   scalar DateTime
@@ -53,29 +55,33 @@ const resolveFunctions = {
   URI: GraphQLUrl,
   Query: {
     entries: async (obj, args, { entryLoader }: Loaders) => {
-      const entries = await EntryTable.getAll();
+      const entries = await backend.getEntries();
       for (const entry of entries) {
-        entryLoader.prime(entry.id, entry);
+        if (entry) {
+          entryLoader.prime(entry.id, entry);
+        }
       }
       return entries;
     },
     feeds: async (obj, args, { feedLoader }: Loaders) => {
-      const feeds = await FeedTable.getAll();
+      const feeds = await backend.getFeeds();
       for (const feed of feeds) {
-        feedLoader.prime(feed.id, feed);
+        if (feed) {
+          feedLoader.prime(feed.id, feed);
+        }
       }
       return feeds;
     }
   },
   Mutation: {
     subscribeToFeed: async (obj, { uri }, { feedLoader }: Loaders) => {
-      await FeedTable.insert({ uri });
-      const feed = await FeedTable.getByUri(uri);
+      await backend.insertFeed({ uri });
+      const feed = await backend.getFeedByUri(uri);
       if (!feed) {
         return null;
       }
       feedLoader.prime(feed.id, feed);
-      await EntryTable.insert(feed.id, {
+      await backend.insertEntry(feed.id, {
         title: "Example",
         content: "This is an example"
       });
@@ -106,11 +112,23 @@ const schema = makeExecutableSchema({
 const app = express();
 app.use("/graphql", (req, res) => {
   const loaders: Loaders = {
-    entryLoader: new DataLoader(EntryTable.getByIds),
-    feedLoader: new DataLoader(FeedTable.getByIds),
-    feedEntryLoader: new DataLoader(ids =>
-      Promise.all(ids.map(EntryTable.getEntryIdsForFeed))
-    )
+    entryLoader: new DataLoader(async ids => {
+      const entries = await backend.getEntries({ ids });
+      const byId: Map<number, Entry> = new Map();
+      for (const entry of entries) {
+        byId.set(entry.id, entry);
+      }
+      return ids.map(id => byId.get(id));
+    }),
+    feedLoader: new DataLoader(async ids => {
+      const feeds = await backend.getFeeds({ ids });
+      const byId: Map<number, Feed> = new Map();
+      for (const feed of feeds) {
+        byId.set(feed.id, feed);
+      }
+      return ids.map(id => byId.get(id));
+    }),
+    feedEntryLoader: new DataLoader(ids => backend.getEntryIdsForFeedIds(ids))
   };
 
   return graphqlHTTP({
