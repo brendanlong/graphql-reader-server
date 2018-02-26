@@ -3,7 +3,8 @@ import type { EntryInput, FeedInput } from "./model";
 import { Entry, Feed } from "./model";
 
 export type EntrySearch = {
-  ids?: $ReadOnlyArray<number>
+  ids?: $ReadOnlyArray<number>,
+  feedIds?: $ReadOnlyArray<number>
 };
 
 export type FeedSearch = {
@@ -20,6 +21,4 @@ export interface Backend {
   getFeeds(?FeedSearch): Promise<Feed[]>;
 
   getFeedByUri(uri: string): Promise<?Feed>;
-
-  getEntryIdsForFeedIds(feedIds: $ReadOnlyArray<number>): Promise<number[][]>;
 }

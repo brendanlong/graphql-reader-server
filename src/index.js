@@ -5,6 +5,7 @@ import { makeExecutableSchema } from "graphql-tools";
 import { GraphQLDateTime } from "graphql-iso-date";
 import { GraphQLUrl } from "graphql-url";
 import DataLoader from "dataloader";
+import { defaultTo } from "lodash";
 
 import { Entry, Feed } from "./model";
 import Backend from "./sqliteBackend";
@@ -46,8 +47,8 @@ const schemaString = `
 
 type Loaders = {
   entryLoader: DataLoader<number, ?Entry>,
-  feedLoader: DataLoader<number, ?Feed>,
-  feedEntryLoader: DataLoader<number, number[]>
+  entriesByFeedIdLoader: DataLoader<number, Entry[]>,
+  feedLoader: DataLoader<number, ?Feed>
 };
 
 const resolveFunctions = {
@@ -93,14 +94,8 @@ const resolveFunctions = {
       feedLoader.load(feedId)
   },
   Feed: {
-    entries: async (
-      { id }: Feed,
-      args,
-      { entryLoader, feedEntryLoader }: Loaders
-    ) => {
-      const entryIds = await feedEntryLoader.load(id);
-      return entryLoader.loadMany(entryIds);
-    }
+    entries: ({ id }: Feed, args, { entriesByFeedIdLoader }: Loaders) =>
+      entriesByFeedIdLoader.load(id)
   }
 };
 
@@ -128,7 +123,18 @@ app.use("/graphql", (req, res) => {
       }
       return ids.map(id => byId.get(id));
     }),
-    feedEntryLoader: new DataLoader(ids => backend.getEntryIdsForFeedIds(ids))
+    entriesByFeedIdLoader: new DataLoader(async feedIds => {
+      const entries = await backend.getEntries({ feedIds });
+      const byFeedId: Map<number, Entry[]> = new Map();
+      for (const entry of entries) {
+        const feedEntries = defaultTo(byFeedId.get(entry.feedId), []);
+        if (feedEntries.length === 0) {
+          byFeedId.set(entry.feedId, feedEntries);
+        }
+        feedEntries.push(entry);
+      }
+      return feedIds.map(id => defaultTo(byFeedId.get(id), []));
+    })
   };
 
   return graphqlHTTP({

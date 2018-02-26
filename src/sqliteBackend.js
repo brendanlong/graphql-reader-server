@@ -62,28 +62,27 @@ export class EntryTable {
     return new Entry(id, feedId, { title, content });
   }
 
-  async getAll(): Promise<Entry[]> {
+  async search(search?: ?EntrySearch): Promise<Entry[]> {
+    const where = [];
+    const params = [];
+    if (search) {
+      const { ids, feedIds } = search;
+      if (ids) {
+        where.push(`id IN (${placeholders(ids.length)})`);
+        params.push.apply(params, ids);
+      }
+      if (feedIds) {
+        where.push(`feedId IN (${placeholders(feedIds.length)})`);
+        params.push.apply(params, feedIds);
+      }
+    }
+    let query = "SELECT * FROM Entry";
+    if (where.length > 0) {
+      query = `${query} WHERE ${where.join("AND")}`;
+    }
     const db = await this.dbPromise;
-    const rows: EntryRow[] = await db.all("SELECT * FROM Entry");
+    const rows: EntryRow[] = await db.all(query, params);
     return rows.map(EntryTable.rowToEntry);
-  }
-
-  async getByIds(ids: $ReadOnlyArray<number>): Promise<Entry[]> {
-    const db = await this.dbPromise;
-    const rows: EntryRow[] = await db.all(
-      `SELECT * FROM Entry WHERE id IN(${placeholders(ids.length)})`,
-      ids
-    );
-    return rows.map(EntryTable.rowToEntry);
-  }
-
-  async getEntryIdsForFeed(feedId: number): Promise<number[]> {
-    const db = await this.dbPromise;
-    const rows: IdRow[] = await db.all(
-      "SELECT id FROM Entry WHERE feedId = ?",
-      feedId
-    );
-    return rows.map(row => row.id);
   }
 }
 
@@ -119,18 +118,22 @@ export class FeedTable {
     return new Feed(id, { uri });
   }
 
-  async getAll(): Promise<Feed[]> {
+  async search(search?: ?FeedSearch): Promise<Feed[]> {
+    const where = [];
+    const params = [];
+    if (search) {
+      const { ids } = search;
+      if (ids) {
+        where.push(`id IN (${placeholders(ids.length)})`);
+        params.push.apply(params, ids);
+      }
+    }
+    let query = "SELECT * FROM Feed";
+    if (where.length > 0) {
+      query = `${query} WHERE ${where.join("AND")}`;
+    }
     const db = await this.dbPromise;
-    const rows: FeedRow[] = await db.all("SELECT * FROM Feed");
-    return rows.map(FeedTable.rowToFeed);
-  }
-
-  async getByIds(ids: $ReadOnlyArray<number>): Promise<Feed[]> {
-    const db = await this.dbPromise;
-    const rows: FeedRow[] = await db.all(
-      `SELECT * FROM Feed WHERE id IN(${placeholders(ids.length)})`,
-      ids
-    );
+    const rows: FeedRow[] = await db.all(query, params);
     return rows.map(FeedTable.rowToFeed);
   }
 
@@ -159,13 +162,7 @@ export default class SqliteBackend implements Backend {
   }
 
   getEntries(search: ?EntrySearch) {
-    if (search) {
-      const { ids } = search;
-      if (ids) {
-        return this.entryTable.getByIds(ids);
-      }
-    }
-    return this.entryTable.getAll();
+    return this.entryTable.search(search);
   }
 
   insertFeed(input: FeedInput) {
@@ -173,22 +170,10 @@ export default class SqliteBackend implements Backend {
   }
 
   getFeeds(search: ?FeedSearch) {
-    if (search) {
-      const { ids } = search;
-      if (ids) {
-        return this.feedTable.getByIds(ids);
-      }
-    }
-    return this.feedTable.getAll();
+    return this.feedTable.search(search);
   }
 
   getFeedByUri(uri: string) {
     return this.feedTable.getByUri(uri);
-  }
-
-  getEntryIdsForFeedIds(feedIds: $ReadOnlyArray<number>) {
-    return Promise.all(
-      feedIds.map(id => this.entryTable.getEntryIdsForFeed(id))
-    );
   }
 }
