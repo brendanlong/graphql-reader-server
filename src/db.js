@@ -4,7 +4,7 @@ import sqlite from "sqlite";
 import type { EntryInput, FeedInput } from "./model";
 import { Entry, Feed } from "./model";
 
-const dbPromise = sqlite.open(":memory:").then(db => {
+const dbPromise: Promise<sqlite.Database> = sqlite.open(":memory:").then(db =>
   db.exec(`
     PRAGMA foreign_keys = ON;
 
@@ -19,9 +19,31 @@ const dbPromise = sqlite.open(":memory:").then(db => {
       title text,
       content text
     );
-  `);
-  return db;
-});
+  `)
+);
+
+type EntryRow = {
+  id: number,
+  feedId: number,
+  title: ?string,
+  content: ?string
+};
+
+type FeedRow = {
+  id: number,
+  uri: string,
+  title: ?string
+};
+
+type IdRow = {
+  id: number
+};
+
+function placeholders(n: number) {
+  return Array(n)
+    .fill("?")
+    .join(",");
+}
 
 export class EntryTable {
   static async insert(
@@ -38,27 +60,20 @@ export class EntryTable {
     return lastID;
   }
 
-  static rowToEntry({ id, feedId, title, content }: Object): Entry {
+  static rowToEntry({ id, feedId, title, content }: EntryRow): Entry {
     return new Entry(id, feedId, { title, content });
   }
 
   static async getAll(): Promise<Entry[]> {
     const db = await dbPromise;
-    const rows = await db.all("SELECT * FROM Entry");
-    const entries = [];
-    for (const row of rows) {
-      entries.push(EntryTable.rowToEntry(row));
-    }
-    return entries;
+    const rows: EntryRow[] = await db.all("SELECT * FROM Entry");
+    return rows.map(EntryTable.rowToEntry);
   }
 
   static async getByIds(ids: $ReadOnlyArray<number>): Promise<Array<?Entry>> {
     const db = await dbPromise;
-    const placeholders = Array(ids.length)
-      .fill("?")
-      .join(",");
-    const rows = await db.all(
-      `SELECT * FROM Entry WHERE id IN(${placeholders})`,
+    const rows: EntryRow[] = await db.all(
+      `SELECT * FROM Entry WHERE id IN(${placeholders(ids.length)})`,
       ids
     );
     const rowsById: Map<number, Entry> = new Map();
@@ -70,12 +85,11 @@ export class EntryTable {
 
   static async getEntryIdsForFeed(feedId: number): Promise<number[]> {
     const db = await dbPromise;
-    const rows = await db.all("SELECT id FROM Entry WHERE feedId = ?", feedId);
-    const entries = [];
-    for (const row of rows) {
-      entries.push(row.id);
-    }
-    return entries;
+    const rows: IdRow[] = await db.all(
+      "SELECT id FROM Entry WHERE feedId = ?",
+      feedId
+    );
+    return rows.map(row => row.id);
   }
 }
 
@@ -94,27 +108,20 @@ export class FeedTable {
     }
   }
 
-  static rowToFeed({ id, uri }: Object): Feed {
+  static rowToFeed({ id, uri }: FeedRow): Feed {
     return new Feed(id, { uri });
   }
 
   static async getAll(): Promise<Feed[]> {
     const db = await dbPromise;
-    const rows = await db.all("SELECT * FROM Feed");
-    const feeds = [];
-    for (const row of rows) {
-      feeds.push(FeedTable.rowToFeed(row));
-    }
-    return feeds;
+    const rows: FeedRow[] = await db.all("SELECT * FROM Feed");
+    return rows.map(FeedTable.rowToFeed);
   }
 
   static async getByIds(ids: $ReadOnlyArray<number>): Promise<Array<?Feed>> {
     const db = await dbPromise;
-    const placeholders = Array(ids.length)
-      .fill("?")
-      .join(",");
-    const rows = await db.all(
-      `SELECT * FROM Feed WHERE id IN(${placeholders})`,
+    const rows: FeedRow[] = await db.all(
+      `SELECT * FROM Feed WHERE id IN(${placeholders(ids.length)})`,
       ids
     );
     const rowsById: Map<number, Feed> = new Map();
@@ -126,7 +133,7 @@ export class FeedTable {
 
   static async getByUri(uri: string): Promise<?Feed> {
     const db = await dbPromise;
-    const row = await db.get("SELECT * FROM Feed WHERE uri = ?", uri);
+    const row: FeedRow = await db.get("SELECT * FROM Feed WHERE uri = ?", uri);
     if (row) {
       return FeedTable.rowToFeed(row);
     }

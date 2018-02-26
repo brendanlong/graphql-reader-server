@@ -45,21 +45,21 @@ const schemaString = `
 type Loaders = {
   entryLoader: DataLoader<number, ?Entry>,
   feedLoader: DataLoader<number, ?Feed>,
-  feedEntryLoader: DataLoader<number, number[]>,
+  feedEntryLoader: DataLoader<number, number[]>
 };
 
 const resolveFunctions = {
   DateTime: GraphQLDateTime,
   URI: GraphQLUrl,
   Query: {
-    entries: async (_, __, { entryLoader }: Loaders) => {
+    entries: async (obj, args, { entryLoader }: Loaders) => {
       const entries = await EntryTable.getAll();
       for (const entry of entries) {
         entryLoader.prime(entry.id, entry);
       }
       return entries;
     },
-    feeds: async (_, __, { feedLoader }: Loaders) => {
+    feeds: async (obj, args, { feedLoader }: Loaders) => {
       const feeds = await FeedTable.getAll();
       for (const feed of feeds) {
         feedLoader.prime(feed.id, feed);
@@ -68,7 +68,7 @@ const resolveFunctions = {
     }
   },
   Mutation: {
-    subscribeToFeed: async (_, { uri }, { feedLoader }: Loaders) => {
+    subscribeToFeed: async (obj, { uri }, { feedLoader }: Loaders) => {
       await FeedTable.insert({ uri });
       const feed = await FeedTable.getByUri(uri);
       if (!feed) {
@@ -83,10 +83,15 @@ const resolveFunctions = {
     }
   },
   Entry: {
-    feed: ({ feedId }: Entry, _, { feedLoader }) => feedLoader.load(feedId)
+    feed: ({ feedId }: Entry, args, { feedLoader }: Loaders) =>
+      feedLoader.load(feedId)
   },
   Feed: {
-    entries: async ({ id }: Feed, _, { entryLoader, feedEntryLoader }) => {
+    entries: async (
+      { id }: Feed,
+      args,
+      { entryLoader, feedEntryLoader }: Loaders
+    ) => {
       const entryIds = await feedEntryLoader.load(id);
       return entryLoader.loadMany(entryIds);
     }

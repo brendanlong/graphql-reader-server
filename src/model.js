@@ -1,7 +1,7 @@
 // @flow
 export type EntryInput = {
-  title?: string,
-  content?: string
+  title?: ?string,
+  content?: ?string
 };
 
 export class Entry {
