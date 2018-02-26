@@ -7,9 +7,14 @@ import { Entry, Feed } from "./model";
 
 type EntryRow = {
   id: number,
+  guid: string,
   feedId: number,
+  uri: ?string,
   title: ?string,
-  content: ?string
+  author: ?string,
+  content: ?string,
+  updated: ?number,
+  published: ?number
 };
 
 type FeedRow = {
@@ -36,9 +41,15 @@ export class EntryTable {
       db.exec(`
         CREATE TABLE Entry(
           id integer primary key autoincrement,
+          guid integer not null,
           feedId integer not null references Feed(id),
+          uri text,
           title text,
-          content text
+          author text,
+          content text,
+          updated real,
+          published real,
+          UNIQUE(feedId, guid)
         );
       `)
     );
@@ -46,20 +57,53 @@ export class EntryTable {
 
   async insert(
     feedId: number,
-    { title, content }: EntryInput
-  ): Promise<number> {
+    guid: string,
+    { uri, title, author, content, updated, published }: EntryInput
+  ): Promise<?number> {
     const db = await this.dbPromise;
-    const { lastID } = await db.run(
-      "INSERT INTO Entry (title, content, feedId) VALUES (?, ?, ?)",
-      title,
-      content,
-      feedId
-    );
-    return lastID;
+    try {
+      const { lastID } = await db.run(
+        `
+        INSERT INTO Entry (guid, uri, title, author, content, feedId, updated, published)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        guid,
+        uri,
+        title,
+        author,
+        content,
+        feedId,
+        updated ? updated.getTime() / 1000 : null,
+        published ? published.getTime() / 1000 : null
+      );
+      return lastID;
+    } catch (e) {
+      // Check for unique key violation
+      if (e.errno !== 19) {
+        throw e;
+      }
+      return null;
+    }
   }
 
-  static rowToEntry({ id, feedId, title, content }: EntryRow): Entry {
-    return new Entry(id, feedId, { title, content });
+  static rowToEntry({
+    id,
+    guid,
+    feedId,
+    uri,
+    title,
+    author,
+    content,
+    updated,
+    published
+  }: EntryRow): Entry {
+    return new Entry(id, guid, feedId, {
+      uri,
+      title,
+      author,
+      content,
+      updated: updated ? new Date(updated * 1000) : null,
+      published: published ? new Date(published * 1000) : null
+    });
   }
 
   async search(search?: ?EntrySearch): Promise<Entry[]> {
@@ -157,8 +201,8 @@ export default class SqliteBackend implements Backend {
     this.feedTable = new FeedTable(dbPromise);
   }
 
-  insertEntry(feedId: number, input: EntryInput) {
-    return this.entryTable.insert(feedId, input);
+  insertEntry(feedId: number, guid: string, input: EntryInput) {
+    return this.entryTable.insert(feedId, guid, input);
   }
 
   getEntries(search: ?EntrySearch) {

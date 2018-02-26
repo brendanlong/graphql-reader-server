@@ -6,6 +6,7 @@ import { GraphQLDateTime } from "graphql-iso-date";
 import { GraphQLUrl } from "graphql-url";
 import DataLoader from "dataloader";
 import { defaultTo } from "lodash";
+import feedparser from "feedparser-promised";
 
 import { Entry, Feed } from "./model";
 import Backend from "./sqliteBackend";
@@ -75,17 +76,29 @@ const resolveFunctions = {
     }
   },
   Mutation: {
-    subscribeToFeed: async (obj, { uri }, { feedLoader }: Loaders) => {
+    subscribeToFeed: async (
+      obj,
+      { uri },
+      { entryLoader, entriesByFeedIdLoader, feedLoader }: Loaders
+    ) => {
       await backend.insertFeed({ uri });
       const feed = await backend.getFeedByUri(uri);
       if (!feed) {
         return null;
       }
       feedLoader.prime(feed.id, feed);
-      await backend.insertEntry(feed.id, {
-        title: "Example",
-        content: "This is an example"
-      });
+
+      const items = await feedparser.parse(feed.uri);
+      for (const item of items) {
+        await backend.insertEntry(feed.id, item.guid, {
+          uri: item.link,
+          author: item.author,
+          title: item.title,
+          content: item.description,
+          updated: item.date,
+          published: item.pubdate
+        });
+      }
       return feed;
     }
   },

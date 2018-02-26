@@ -1,20 +1,39 @@
 // @flow
 export type EntryInput = {
+  uri?: ?string,
   title?: ?string,
-  content?: ?string
+  author?: ?string,
+  content?: ?string,
+  updated?: ?Date,
+  published?: ?Date
 };
 
 export class Entry {
   id: number;
+  guid: string;
   feedId: number;
+  uri: ?string;
   title: ?string;
+  author: ?string;
   content: ?string;
+  updated: ?Date;
+  published: ?Date;
 
-  constructor(id: number, feedId: number, { title, content }: EntryInput) {
+  constructor(
+    id: number,
+    guid: string,
+    feedId: number,
+    { uri, title, author, content, updated, published }: EntryInput
+  ) {
     this.id = id;
+    this.guid = guid;
     this.feedId = feedId;
+    this.uri = uri;
     this.title = title;
+    this.author = author;
     this.content = content;
+    this.updated = updated;
+    this.published = published;
   }
 }
 
