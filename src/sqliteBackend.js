@@ -23,10 +23,6 @@ type FeedRow = {
   title: ?string
 };
 
-type IdRow = {
-  id: number
-};
-
 function placeholders(n: number) {
   return Array(n)
     .fill("?")
@@ -113,11 +109,11 @@ export class EntryTable {
       const { ids, feedIds } = search;
       if (ids) {
         where.push(`id IN (${placeholders(ids.length)})`);
-        params.push.apply(params, ids);
+        params.push(...ids);
       }
       if (feedIds) {
         where.push(`feedId IN (${placeholders(feedIds.length)})`);
-        params.push.apply(params, feedIds);
+        params.push(...feedIds);
       }
     }
     let query = "SELECT * FROM Entry";
@@ -169,7 +165,7 @@ export class FeedTable {
       const { ids } = search;
       if (ids) {
         where.push(`id IN (${placeholders(ids.length)})`);
-        params.push.apply(params, ids);
+        params.push(...ids);
       }
     }
     let query = "SELECT * FROM Feed";

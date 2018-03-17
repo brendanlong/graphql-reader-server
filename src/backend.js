@@ -12,7 +12,11 @@ export type FeedSearch = {
 };
 
 export interface Backend {
-  insertEntry(feedId: number, guid: string, input: EntryInput): Promise<?number>;
+  insertEntry(
+    feedId: number,
+    guid: string,
+    input: EntryInput
+  ): Promise<?number>;
 
   getEntries(?EntrySearch): Promise<Entry[]>;
 

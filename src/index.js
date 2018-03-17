@@ -76,11 +76,7 @@ const resolveFunctions = {
     }
   },
   Mutation: {
-    subscribeToFeed: async (
-      obj,
-      { uri },
-      { entryLoader, entriesByFeedIdLoader, feedLoader }: Loaders
-    ) => {
+    subscribeToFeed: async (obj, { uri }, { feedLoader }: Loaders) => {
       await backend.insertFeed({ uri });
       const feed = await backend.getFeedByUri(uri);
       if (!feed) {
@@ -89,16 +85,18 @@ const resolveFunctions = {
       feedLoader.prime(feed.id, feed);
 
       const items = await feedparser.parse(feed.uri);
-      for (const item of items) {
-        await backend.insertEntry(feed.id, item.guid, {
-          uri: item.link,
-          author: item.author,
-          title: item.title,
-          content: item.description,
-          updated: item.date,
-          published: item.pubdate
-        });
-      }
+      await Promise.all(
+        items.map(item =>
+          backend.insertEntry(feed.id, item.guid, {
+            uri: item.link,
+            author: item.author,
+            title: item.title,
+            content: item.description,
+            updated: item.date,
+            published: item.pubdate
+          })
+        )
+      );
       return feed;
     }
   },
