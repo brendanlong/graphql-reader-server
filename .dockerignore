@@ -1,0 +1,10 @@
+.dockerignore
+.editorconfig
+.git
+.gitignore
+.vscode
+build_image.sh
+Dockerfile
+lib
+LICENSE
+node_modules
