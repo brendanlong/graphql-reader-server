@@ -43,12 +43,8 @@
     "start": "babel-node src/index.js",
     "start-production": "node lib/index.js",
     "start-watch": "nodemon --exec babel-node src/index.js",
-    "check": "yarn flow status && yarn lint",
+    "check": "flow status --quiet && yarn lint",
     "lint": "eslint src",
-    "prettier": "prettier --write src/**/*.js",
-    "flow start": "flow start",
-    "flow stop": "flow stop",
-    "flow status": "flow status",
-    "flow coverage": "flow coverage"
+    "prettier": "prettier --write src/**/*.js"
   }
 }

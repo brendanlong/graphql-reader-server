@@ -4,7 +4,7 @@ FROM docker.io/node:9.8.0-alpine AS build
 RUN apk add --no-cache ca-certificates wget
 # flow requires glibc: https://github.com/facebook/flow/issues/3649
 RUN wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub && \
-  wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.27-r0/glibc-2.27-r0.apk && \
+  wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.27-r0/glibc-2.27-r0.apk && \
   apk add glibc-2.27-r0.apk
 
 WORKDIR /opt
