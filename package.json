@@ -8,6 +8,7 @@
   "license": "Unlicense",
   "dependencies": {
     "ajv": "5.5.2",
+    "babel-runtime": "^6.26.0",
     "dataloader": "^1.4.0",
     "express": "^4.16.2",
     "express-graphql": "^0.6.12",
@@ -22,6 +23,7 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-eslint": "^8.2.2",
+    "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.1",
     "babel-preset-flow": "^6.23.0",
     "eslint": "^4.18.1",
@@ -39,6 +41,7 @@
   "scripts": {
     "build": "babel src -d lib",
     "start": "babel-node src/index.js",
+    "start-production": "node lib/index.js",
     "start-watch": "nodemon --exec babel-node src/index.js",
     "check": "yarn flow status && yarn lint",
     "lint": "eslint src",
