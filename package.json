@@ -7,7 +7,7 @@
   "author": "Brendan Long <self@brendanlong.com>",
   "license": "Unlicense",
   "dependencies": {
-    "ajv": "5.5.2",
+    "ajv": "6.3.0",
     "babel-runtime": "^6.26.0",
     "dataloader": "^1.4.0",
     "express": "^4.16.2",
@@ -34,7 +34,7 @@
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-prettier": "^2.6.0",
     "eslint-plugin-react": "^7.7.0",
-    "flow-bin": "^0.66.0",
+    "flow-bin": "^0.68.0",
     "nodemon": "^1.15.1",
     "prettier": "^1.10.2"
   },
