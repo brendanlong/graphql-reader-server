@@ -1,5 +1,6 @@
 // @flow
 import sqlite from "sqlite";
+import feedparser from "feedparser-promised";
 
 import type { Backend, EntrySearch, FeedSearch } from "./backend";
 import type { EntryInput, FeedInput } from "./model";
@@ -205,8 +206,26 @@ export default class SqliteBackend implements Backend {
     return this.entryTable.search(search);
   }
 
-  insertFeed(input: FeedInput) {
-    return this.feedTable.insert(input);
+  async insertFeed(input: FeedInput) {
+    const feedId = await this.feedTable.insert(input);
+
+    if (feedId != null) {
+      const items = await feedparser.parse(input.uri);
+      await Promise.all(
+        items.map(item =>
+          this.insertEntry(feedId, item.guid, {
+            uri: item.link,
+            author: item.author,
+            title: item.title,
+            content: item.description,
+            updated: item.date,
+            published: item.pubdate
+          })
+        )
+      );
+    }
+
+    return feedId;
   }
 
   getFeeds(search: ?FeedSearch) {
